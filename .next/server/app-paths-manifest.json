@@ -1,0 +1,10 @@
+{
+  "/profile/[userId]/page": "app/profile/[userId]/page.js",
+  "/page": "app/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/explore-users/page": "app/explore-users/page.js",
+  "/upload/page": "app/upload/page.js",
+  "/following/page": "app/following/page.js",
+  "/live/page": "app/live/page.js",
+  "/explore/page": "app/explore/page.js"
+}
