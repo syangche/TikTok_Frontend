@@ -37,11 +37,22 @@ const getVideoById = async (id)=>{
 };
 const getUserVideos = async (userId)=>{
     try {
+        console.log(`Fetching videos for user ID: ${userId}`);
+        if (!userId) {
+            console.error('getUserVideos called without userId');
+            return {
+                videos: []
+            };
+        }
         const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].get(`/users/${userId}/videos`);
+        console.log(`Received ${response.data.videos?.length || 0} videos for user ${userId}`);
         return response.data;
     } catch (error) {
         console.error(`Error fetching videos for user ${userId}:`, error);
-        throw error;
+        // Return empty data to prevent UI errors
+        return {
+            videos: []
+        };
     }
 };
 const getFollowingVideos = async ()=>{
@@ -50,7 +61,10 @@ const getFollowingVideos = async ()=>{
         return response.data;
     } catch (error) {
         console.error('Error fetching following videos:', error);
-        throw error;
+        // throw error;
+        return {
+            videos: []
+        };
     }
 };
 const likeVideo = async (videoId)=>{
@@ -71,24 +85,26 @@ const unlikeVideo = async (videoId)=>{
         throw error;
     }
 };
-const addComment = async (videoId, content)=>{
-    try {
-        const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post(`/comments`, {
-            videoId,
-            content
-        });
-        return response.data;
-    } catch (error) {
-        console.error(`Error adding comment to video ${videoId}:`, error);
-        throw error;
-    }
-};
 const getVideoComments = async (videoId)=>{
     try {
         const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].get(`/videos/${videoId}/comments`);
         return response.data;
     } catch (error) {
         console.error(`Error fetching comments for video ${videoId}:`, error);
+        return {
+            comments: []
+        };
+    }
+};
+const addComment = async (videoId, content)=>{
+    try {
+        const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post('/comments', {
+            videoId,
+            content
+        });
+        return response.data;
+    } catch (error) {
+        console.error(`Error adding comment to video ${videoId}:`, error);
         throw error;
     }
 };
@@ -123,25 +139,20 @@ const VideoCard = ({ video })=>{
     const [likeCount, setLikeCount] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(video.likeCount || 0);
     const [videoError, setVideoError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
     const videoRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])(null);
-    const [isMuted, setIsMuted] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(true);
-    // Add this function to your VideoCard component
+    const [isUnmuted, setIsUnmuted] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(true);
     const getFullVideoUrl = (url)=>{
         if (!url) return null;
-        // If it's already a complete URL, return it
         if (url.startsWith("http")) return url;
-        // Otherwise, prepend your server URL
         const baseUrl = ("TURBOPACK compile-time value", "http://localhost:8000/api") || "http://localhost:8000";
-        // Remove the '/api' part if present
         const serverUrl = baseUrl.includes("/api") ? baseUrl.substring(0, baseUrl.indexOf("/api")) : baseUrl;
         return `${serverUrl}${url}`;
     };
-    // Then in your video source element:
     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("source", {
         src: getFullVideoUrl(video.videoUrl),
         type: "video/mp4"
     }, void 0, false, {
         fileName: "[project]/src/components/ui/VideoCard.jsx",
-        lineNumber: 37,
+        lineNumber: 32,
         columnNumber: 3
     }, this);
     // Check if the video is already liked by the user
@@ -232,18 +243,35 @@ const VideoCard = ({ video })=>{
         if (!videoRef.current) return;
         const observer = new IntersectionObserver(([entry])=>{
             if (entry.isIntersecting) {
-                // Don't automatically unmute videos - let user control this
-                videoRef.current.play().catch((err)=>console.log('Autoplay prevented:', err));
-                setIsPlaying(true);
+                // Only try to play if videoRef.current exists
+                if (videoRef.current) {
+                    videoRef.current.play().then(()=>{
+                        setIsPlaying(true);
+                    }).catch((error)=>{
+                        console.error("Video play error:", error);
+                        setIsPlaying(false);
+                    });
+                }
             } else {
-                videoRef.current.pause();
-                setIsPlaying(false);
+                // Add null check before trying to pause
+                if (videoRef.current) {
+                    videoRef.current.pause();
+                    setIsPlaying(false);
+                }
             }
         }, {
             threshold: 0.7
         });
-        observer.observe(videoRef.current);
-        return ()=>observer.disconnect();
+        const currentVideoRef = videoRef.current;
+        if (currentVideoRef) {
+            observer.observe(currentVideoRef);
+        }
+        // Use the saved reference in the cleanup function
+        return ()=>{
+            if (currentVideoRef) {
+                observer.unobserve(currentVideoRef);
+            }
+        };
     }, []);
     //   return () => {
     //     if (videoRef.current) {
@@ -270,22 +298,22 @@ const VideoCard = ({ video })=>{
                             className: "h-full w-full object-cover"
                         }, void 0, false, {
                             fileName: "[project]/src/components/ui/VideoCard.jsx",
-                            lineNumber: 167,
+                            lineNumber: 183,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/ui/VideoCard.jsx",
-                        lineNumber: 166,
+                        lineNumber: 182,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/components/ui/VideoCard.jsx",
-                    lineNumber: 165,
+                    lineNumber: 181,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/ui/VideoCard.jsx",
-                lineNumber: 164,
+                lineNumber: 180,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -300,7 +328,7 @@ const VideoCard = ({ video })=>{
                                 children: video.user?.username
                             }, void 0, false, {
                                 fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                lineNumber: 180,
+                                lineNumber: 196,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -308,7 +336,7 @@ const VideoCard = ({ video })=>{
                                 children: video.caption
                             }, void 0, false, {
                                 fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                lineNumber: 186,
+                                lineNumber: 202,
                                 columnNumber: 11
                             }, this),
                             video.sound && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -318,7 +346,7 @@ const VideoCard = ({ video })=>{
                                         className: "mr-1"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                        lineNumber: 189,
+                                        lineNumber: 205,
                                         columnNumber: 15
                                     }, this),
                                     " ",
@@ -326,13 +354,13 @@ const VideoCard = ({ video })=>{
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                lineNumber: 188,
+                                lineNumber: 204,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/ui/VideoCard.jsx",
-                        lineNumber: 179,
+                        lineNumber: 195,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -347,7 +375,7 @@ const VideoCard = ({ video })=>{
                                             onClick: togglePlay,
                                             className: "h-full w-full object-contain",
                                             loop: true,
-                                            muted: isMuted,
+                                            unmuted: "true",
                                             playsInline: true,
                                             poster: video.thumbnailUrl ? getFullVideoUrl(video.thumbnailUrl) : "https://via.placeholder.com/150",
                                             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("source", {
@@ -355,24 +383,24 @@ const VideoCard = ({ video })=>{
                                                 type: "video/mp4"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                                lineNumber: 209,
+                                                lineNumber: 225,
                                                 columnNumber: 17
                                             }, this)
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                            lineNumber: 200,
+                                            lineNumber: 216,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                             onClick: (e)=>{
                                                 e.stopPropagation(); // Prevent video play/pause
-                                                setIsMuted(!isMuted);
+                                                setIsUnmuted(!isUnmuted);
                                             },
                                             className: "absolute bottom-4 right-4 bg-black bg-opacity-50 rounded-full p-2 text-white",
-                                            children: isMuted ? 'Unmute' : 'Mute'
+                                            children: isUnmuted ? 'Mute' : 'Unmute'
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                            lineNumber: 216,
+                                            lineNumber: 232,
                                             columnNumber: 15
                                         }, this),
                                         !isPlaying && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -382,12 +410,12 @@ const VideoCard = ({ video })=>{
                                                 children: "▶️"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                                lineNumber: 228,
+                                                lineNumber: 244,
                                                 columnNumber: 21
                                             }, this)
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                            lineNumber: 227,
+                                            lineNumber: 243,
                                             columnNumber: 19
                                         }, this)
                                     ]
@@ -399,7 +427,7 @@ const VideoCard = ({ video })=>{
                                             children: "Video unavailable"
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                            lineNumber: 236,
+                                            lineNumber: 252,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -407,7 +435,7 @@ const VideoCard = ({ video })=>{
                                             children: "Using fallback video"
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                            lineNumber: 237,
+                                            lineNumber: 253,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("video", {
@@ -422,23 +450,23 @@ const VideoCard = ({ video })=>{
                                                 type: "video/mp4"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                                lineNumber: 248,
+                                                lineNumber: 264,
                                                 columnNumber: 19
                                             }, this)
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                            lineNumber: 240,
+                                            lineNumber: 256,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                    lineNumber: 235,
+                                    lineNumber: 251,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                lineNumber: 197,
+                                lineNumber: 213,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -454,12 +482,12 @@ const VideoCard = ({ video })=>{
                                                     size: 20
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                                    lineNumber: 266,
+                                                    lineNumber: 282,
                                                     columnNumber: 17
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                                lineNumber: 265,
+                                                lineNumber: 281,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -467,13 +495,13 @@ const VideoCard = ({ video })=>{
                                                 children: likeCount
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                                lineNumber: 268,
+                                                lineNumber: 284,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                        lineNumber: 259,
+                                        lineNumber: 275,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$app$2d$dir$2f$link$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -486,12 +514,12 @@ const VideoCard = ({ video })=>{
                                                     size: 20
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                                    lineNumber: 276,
+                                                    lineNumber: 292,
                                                     columnNumber: 17
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                                lineNumber: 275,
+                                                lineNumber: 291,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -499,13 +527,13 @@ const VideoCard = ({ video })=>{
                                                 children: video.commentCount || 0
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                                lineNumber: 278,
+                                                lineNumber: 294,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                        lineNumber: 271,
+                                        lineNumber: 287,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -517,12 +545,12 @@ const VideoCard = ({ video })=>{
                                                     size: 20
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                                    lineNumber: 283,
+                                                    lineNumber: 299,
                                                     columnNumber: 17
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                                lineNumber: 282,
+                                                lineNumber: 298,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -530,37 +558,37 @@ const VideoCard = ({ video })=>{
                                                 children: "Share"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                                lineNumber: 285,
+                                                lineNumber: 301,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                        lineNumber: 281,
+                                        lineNumber: 297,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/components/ui/VideoCard.jsx",
-                                lineNumber: 258,
+                                lineNumber: 274,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/ui/VideoCard.jsx",
-                        lineNumber: 195,
+                        lineNumber: 211,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/ui/VideoCard.jsx",
-                lineNumber: 177,
+                lineNumber: 193,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/ui/VideoCard.jsx",
-        lineNumber: 162,
+        lineNumber: 178,
         columnNumber: 5
     }, this);
 };
@@ -595,7 +623,7 @@ const VideoFeed = ({ feedType = 'forYou' })=>{
             let response;
             // Use different API endpoints based on feed type
             if (feedType === 'following') {
-                response = await getFollowingVideos();
+                response = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$videoService$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getFollowingVideos"])();
             } else {
                 response = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$videoService$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getVideos"])();
             }

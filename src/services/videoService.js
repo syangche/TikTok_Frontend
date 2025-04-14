@@ -23,13 +23,23 @@ export const getVideoById = async (id) => {
   }
 };
 
+// In videoService.js
 export const getUserVideos = async (userId) => {
   try {
+    console.log(`Fetching videos for user ID: ${userId}`);
+    
+    if (!userId) {
+      console.error('getUserVideos called without userId');
+      return { videos: [] };
+    }
+    
     const response = await apiClient.get(`/users/${userId}/videos`);
+    console.log(`Received ${response.data.videos?.length || 0} videos for user ${userId}`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching videos for user ${userId}:`, error);
-    throw error;
+    // Return empty data to prevent UI errors
+    return { videos: [] };
   }
 };
 
@@ -39,7 +49,8 @@ export const getFollowingVideos = async () => {
     return response.data;
   } catch (error) {
     console.error('Error fetching following videos:', error);
-    throw error;
+      // throw error;
+      return { videos: [] };
   }
 };
 
@@ -63,25 +74,25 @@ export const unlikeVideo = async (videoId) => {
   }
 };
 
-export const addComment = async (videoId, content) => {
-  try {
-    const response = await apiClient.post(`/comments`, {
-      videoId,
-      content
-    });
-    return response.data;
-  } catch (error) {
-    console.error(`Error adding comment to video ${videoId}:`, error);
-    throw error;
-  }
-};
-
 export const getVideoComments = async (videoId) => {
   try {
     const response = await apiClient.get(`/videos/${videoId}/comments`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching comments for video ${videoId}:`, error);
+    return { comments: [] };
+  }
+};
+
+export const addComment = async (videoId, content) => {
+  try {
+    const response = await apiClient.post('/comments', {
+      videoId,
+      content
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error adding comment to video ${videoId}:`, error);
     throw error;
   }
 };

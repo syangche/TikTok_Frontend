@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import VideoCard from './VideoCard';
-import { getVideos } from '../../services/videoService';
+import { getVideos, getFollowingVideos } from '../../services/videoService';
 import toast from 'react-hot-toast';
 
 const VideoFeed = ({ feedType = 'forYou' }) => { // Add default value

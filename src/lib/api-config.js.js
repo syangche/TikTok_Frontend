@@ -1,18 +1,16 @@
+// src/lib/api-config.js
 import axios from 'axios';
 
-// Define base URL for our API
-const API_BASE_URL = 'http://localhost:8000/api'; // Adjust port to yours
-
-// Create main API instance
-const api = axios.create({
-  baseURL: API_BASE_URL,
+// Create axios instance with baseURL
+const apiClient = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api',
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
 // Request interceptor for adding authorization
-api.interceptors.request.use(
+apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -25,20 +23,4 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor for handling errors
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // Handle token expiration
-    if (error.response && error.response.status === 401) {
-      localStorage.removeItem('token');
-      // Optionally redirect to login
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
-  }
-);
-
-export default api;
-
-
+export default apiClient;

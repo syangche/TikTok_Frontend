@@ -12,18 +12,18 @@ export const getUserById = async (userId) => {
 
 export const updateUser = async (userId, userData) => {
   try {
-    let config = {};
-    
-    // If userData is FormData, set the right headers
+    console.log("Updating user:", userId);
+    // Log FormData contents for debugging (can't directly log FormData)
     if (userData instanceof FormData) {
-      config = {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      };
+      console.log("FormData contains avatar:", userData.has('avatar'));
     }
     
-    const response = await apiClient.put(`/users/${userId}`, userData, config);
+    const response = await apiClient.put(`/users/${userId}`, userData, {
+      headers: userData instanceof FormData ? 
+        { 'Content-Type': 'multipart/form-data' } : 
+        { 'Content-Type': 'application/json' }
+    });
+    
     return response.data;
   } catch (error) {
     console.error(`Error updating user ${userId}:`, error);
@@ -33,7 +33,8 @@ export const updateUser = async (userId, userData) => {
 
 export const followUser = async (userId) => {
   try {
-    const response = await apiClient.post(`/users/${userId}/followers`);
+    console.log(`Following user ${userId}`);
+    const response = await apiClient.post(`/users/${userId}/follow`);
     return response.data;
   } catch (error) {
     console.error(`Error following user ${userId}:`, error);
@@ -43,7 +44,8 @@ export const followUser = async (userId) => {
 
 export const unfollowUser = async (userId) => {
   try {
-    const response = await apiClient.delete(`/users/${userId}/followers`);
+    console.log(`Unfollowing user ${userId}`);
+    const response = await apiClient.delete(`/users/${userId}/follow`);
     return response.data;
   } catch (error) {
     console.error(`Error unfollowing user ${userId}:`, error);

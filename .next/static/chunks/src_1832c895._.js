@@ -27,16 +27,18 @@ const getUserById = async (userId)=>{
 };
 const updateUser = async (userId, userData)=>{
     try {
-        let config = {};
-        // If userData is FormData, set the right headers
+        console.log("Updating user:", userId);
+        // Log FormData contents for debugging (can't directly log FormData)
         if (userData instanceof FormData) {
-            config = {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            };
+            console.log("FormData contains avatar:", userData.has('avatar'));
         }
-        const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].put(`/users/${userId}`, userData, config);
+        const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].put(`/users/${userId}`, userData, {
+            headers: userData instanceof FormData ? {
+                'Content-Type': 'multipart/form-data'
+            } : {
+                'Content-Type': 'application/json'
+            }
+        });
         return response.data;
     } catch (error) {
         console.error(`Error updating user ${userId}:`, error);
@@ -45,7 +47,8 @@ const updateUser = async (userId, userData)=>{
 };
 const followUser = async (userId)=>{
     try {
-        const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].post(`/users/${userId}/followers`);
+        console.log(`Following user ${userId}`);
+        const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].post(`/users/${userId}/follow`);
         return response.data;
     } catch (error) {
         console.error(`Error following user ${userId}:`, error);
@@ -54,7 +57,8 @@ const followUser = async (userId)=>{
 };
 const unfollowUser = async (userId)=>{
     try {
-        const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].delete(`/users/${userId}/followers`);
+        console.log(`Unfollowing user ${userId}`);
+        const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].delete(`/users/${userId}/follow`);
         return response.data;
     } catch (error) {
         console.error(`Error unfollowing user ${userId}:`, error);
@@ -132,11 +136,22 @@ const getVideoById = async (id)=>{
 };
 const getUserVideos = async (userId)=>{
     try {
+        console.log(`Fetching videos for user ID: ${userId}`);
+        if (!userId) {
+            console.error('getUserVideos called without userId');
+            return {
+                videos: []
+            };
+        }
         const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].get(`/users/${userId}/videos`);
+        console.log(`Received ${response.data.videos?.length || 0} videos for user ${userId}`);
         return response.data;
     } catch (error) {
         console.error(`Error fetching videos for user ${userId}:`, error);
-        throw error;
+        // Return empty data to prevent UI errors
+        return {
+            videos: []
+        };
     }
 };
 const getFollowingVideos = async ()=>{
@@ -145,7 +160,10 @@ const getFollowingVideos = async ()=>{
         return response.data;
     } catch (error) {
         console.error('Error fetching following videos:', error);
-        throw error;
+        // throw error;
+        return {
+            videos: []
+        };
     }
 };
 const likeVideo = async (videoId)=>{
@@ -166,24 +184,26 @@ const unlikeVideo = async (videoId)=>{
         throw error;
     }
 };
-const addComment = async (videoId, content)=>{
-    try {
-        const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].post(`/comments`, {
-            videoId,
-            content
-        });
-        return response.data;
-    } catch (error) {
-        console.error(`Error adding comment to video ${videoId}:`, error);
-        throw error;
-    }
-};
 const getVideoComments = async (videoId)=>{
     try {
         const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].get(`/videos/${videoId}/comments`);
         return response.data;
     } catch (error) {
         console.error(`Error fetching comments for video ${videoId}:`, error);
+        return {
+            comments: []
+        };
+    }
+};
+const addComment = async (videoId, content)=>{
+    try {
+        const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].post('/comments', {
+            videoId,
+            content
+        });
+        return response.data;
+    } catch (error) {
+        console.error(`Error adding comment to video ${videoId}:`, error);
         throw error;
     }
 };
@@ -247,27 +267,48 @@ function ProfilePage() {
                 "ProfilePage.useEffect.fetchProfileData": async ()=>{
                     try {
                         setLoading(true);
-                        const userData = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$userService$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getUserById"])(userId);
-                        setUser(userData);
-                        setName(userData.name || '');
-                        setBio(userData.bio || '');
-                        // Check if current user is following this profile
-                        if (isAuthenticated && currentUser) {
-                            const followersData = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$userService$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getUserFollowers"])(userId);
-                            setFollowers(followersData.followers || []);
-                            setIsFollowing(followersData.followers?.some({
-                                "ProfilePage.useEffect.fetchProfileData": (f)=>f.id === currentUser.id
-                            }["ProfilePage.useEffect.fetchProfileData"]) || false);
+                        // Fetch user data
+                        let userData;
+                        try {
+                            userData = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$userService$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getUserById"])(userId);
+                            setUser(userData);
+                            setName(userData.name || '');
+                            setBio(userData.bio || '');
+                        } catch (error) {
+                            console.error('Error fetching user data:', error);
+                            __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].error('Failed to load user data');
+                            return; // Exit if we can't get basic user data
                         }
-                        const followingData = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$userService$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getUserFollowing"])(userId);
-                        setFollowing(followingData.following || []);
-                        // Fetch videos without pagination for now
-                        const videosData = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$videoService$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getUserVideos"])({
-                            userId
-                        });
-                        setVideos(videosData.videos || []);
+                        // Fetch followers/following data
+                        if (isAuthenticated && currentUser) {
+                            try {
+                                const followersData = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$userService$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getUserFollowers"])(userId);
+                                setFollowers(followersData.followers || []);
+                                setIsFollowing(followersData.followers?.some({
+                                    "ProfilePage.useEffect.fetchProfileData": (f)=>f.id === currentUser.id
+                                }["ProfilePage.useEffect.fetchProfileData"]) || false);
+                            } catch (error) {
+                                console.error('Error fetching followers:', error);
+                                setFollowers([]);
+                            }
+                        }
+                        try {
+                            const followingData = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$userService$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getUserFollowing"])(userId);
+                            setFollowing(followingData.following || []);
+                        } catch (error) {
+                            console.error('Error fetching following:', error);
+                            setFollowing([]);
+                        }
+                        // Fetch videos with better error handling
+                        try {
+                            const videosData = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$videoService$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getUserVideos"])(userId);
+                            setVideos(videosData.videos || []);
+                        } catch (error) {
+                            console.error('Error fetching videos:', error);
+                            setVideos([]);
+                        }
                     } catch (error) {
-                        console.error('Error fetching profile data:', error);
+                        console.error('Error in fetchProfileData:', error);
                         __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].error('Failed to load profile data');
                     } finally{
                         setLoading(false);
@@ -283,26 +324,28 @@ function ProfilePage() {
         isAuthenticated,
         currentUser
     ]);
+    // In your handleFollowToggle function in the profile page
     const handleFollowToggle = async ()=>{
         if (!isAuthenticated) {
             __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].error('Please log in to follow users');
             return;
         }
         try {
+            let result;
             if (isFollowing) {
-                await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$userService$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["unfollowUser"])(userId);
+                result = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$userService$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["unfollowUser"])(userId);
                 setIsFollowing(false);
-                setFollowers((prev)=>prev.filter((f)=>f.id !== currentUser.id));
-                __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].success('Unfollowed user');
             } else {
-                await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$userService$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["followUser"])(userId);
+                result = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$userService$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["followUser"])(userId);
                 setIsFollowing(true);
-                setFollowers((prev)=>[
-                        ...prev,
-                        currentUser
-                    ]);
-                __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].success('Following user');
             }
+            // Refresh the profile data to get updated counts
+            const refreshedProfileData = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$userService$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getUserById"])(userId);
+            setUser(refreshedProfileData);
+            // Also update followers list
+            const followersData = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$userService$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getUserFollowers"])(userId);
+            setFollowers(followersData.followers || []);
+            __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].success(isFollowing ? 'Unfollowed user' : 'Following user');
         } catch (error) {
             console.error('Error toggling follow:', error);
             __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].error('Failed to follow/unfollow user');
@@ -356,12 +399,12 @@ function ProfilePage() {
                 className: "h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"
             }, void 0, false, {
                 fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                lineNumber: 152,
+                lineNumber: 184,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/src/app/profile/[userId]/page.jsx",
-            lineNumber: 151,
+            lineNumber: 183,
             columnNumber: 7
         }, this);
     }
@@ -372,12 +415,12 @@ function ProfilePage() {
                 children: "User not found"
             }, void 0, false, {
                 fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                lineNumber: 160,
+                lineNumber: 192,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/src/app/profile/[userId]/page.jsx",
-            lineNumber: 159,
+            lineNumber: 191,
             columnNumber: 7
         }, this);
     }
@@ -400,7 +443,7 @@ function ProfilePage() {
                                     className: "h-full w-full object-cover"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                    lineNumber: 178,
+                                    lineNumber: 210,
                                     columnNumber: 17
                                 }, this) : user.avatar ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
                                     src: getFullVideoUrl(user.avatar),
@@ -408,13 +451,13 @@ function ProfilePage() {
                                     className: "h-full w-full object-cover"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                    lineNumber: 184,
+                                    lineNumber: 216,
                                     columnNumber: 17
                                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$icons$2f$fa$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["FaUpload"], {
                                     className: "text-gray-500"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                    lineNumber: 190,
+                                    lineNumber: 222,
                                     columnNumber: 17
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -425,7 +468,7 @@ function ProfilePage() {
                                     className: "hidden"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                    lineNumber: 192,
+                                    lineNumber: 224,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -435,23 +478,23 @@ function ProfilePage() {
                                         children: "Change"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                        lineNumber: 200,
+                                        lineNumber: 232,
                                         columnNumber: 17
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                    lineNumber: 199,
+                                    lineNumber: 231,
                                     columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                            lineNumber: 173,
+                            lineNumber: 205,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                        lineNumber: 172,
+                        lineNumber: 204,
                         columnNumber: 11
                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "h-24 w-24 rounded-full mr-6 overflow-hidden bg-gray-200",
@@ -461,19 +504,19 @@ function ProfilePage() {
                             className: "h-full w-full object-cover"
                         }, void 0, false, {
                             fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                            lineNumber: 207,
+                            lineNumber: 239,
                             columnNumber: 15
                         }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                             className: "h-full w-full flex items-center justify-center bg-gray-200 text-gray-500",
                             children: user.username?.charAt(0)?.toUpperCase() || 'U'
                         }, void 0, false, {
                             fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                            lineNumber: 213,
+                            lineNumber: 245,
                             columnNumber: 15
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                        lineNumber: 205,
+                        lineNumber: 237,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -487,7 +530,7 @@ function ProfilePage() {
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                lineNumber: 221,
+                                lineNumber: 253,
                                 columnNumber: 11
                             }, this),
                             isEditing ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -502,7 +545,7 @@ function ProfilePage() {
                                                 children: "Name"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                                lineNumber: 226,
+                                                lineNumber: 258,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -512,13 +555,13 @@ function ProfilePage() {
                                                 className: "w-full p-2 border border-gray-300 rounded"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                                lineNumber: 227,
+                                                lineNumber: 259,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                        lineNumber: 225,
+                                        lineNumber: 257,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -529,7 +572,7 @@ function ProfilePage() {
                                                 children: "Bio"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                                lineNumber: 236,
+                                                lineNumber: 268,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("textarea", {
@@ -539,13 +582,13 @@ function ProfilePage() {
                                                 rows: "3"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                                lineNumber: 237,
+                                                lineNumber: 269,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                        lineNumber: 235,
+                                        lineNumber: 267,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -557,7 +600,7 @@ function ProfilePage() {
                                                 children: "Save Changes"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                                lineNumber: 246,
+                                                lineNumber: 278,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -567,19 +610,19 @@ function ProfilePage() {
                                                 children: "Cancel"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                                lineNumber: 252,
+                                                lineNumber: 284,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                        lineNumber: 245,
+                                        lineNumber: 277,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                lineNumber: 224,
+                                lineNumber: 256,
                                 columnNumber: 13
                             }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
                                 children: [
@@ -588,7 +631,7 @@ function ProfilePage() {
                                         children: user.name || user.username
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                        lineNumber: 263,
+                                        lineNumber: 295,
                                         columnNumber: 15
                                     }, this),
                                     isOwnProfile ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -599,14 +642,14 @@ function ProfilePage() {
                                                 className: "mr-2"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                                lineNumber: 270,
+                                                lineNumber: 302,
                                                 columnNumber: 19
                                             }, this),
                                             " Edit profile"
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                        lineNumber: 266,
+                                        lineNumber: 298,
                                         columnNumber: 17
                                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                         onClick: handleFollowToggle,
@@ -617,7 +660,7 @@ function ProfilePage() {
                                                     className: "mr-2"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                                    lineNumber: 283,
+                                                    lineNumber: 315,
                                                     columnNumber: 23
                                                 }, this),
                                                 " Following"
@@ -628,7 +671,7 @@ function ProfilePage() {
                                                     className: "mr-2"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                                    lineNumber: 287,
+                                                    lineNumber: 319,
                                                     columnNumber: 23
                                                 }, this),
                                                 " Follow"
@@ -636,7 +679,7 @@ function ProfilePage() {
                                         }, void 0, true)
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                        lineNumber: 273,
+                                        lineNumber: 305,
                                         columnNumber: 17
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -649,14 +692,14 @@ function ProfilePage() {
                                                         children: following.length
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                                        lineNumber: 294,
+                                                        lineNumber: 326,
                                                         columnNumber: 20
                                                     }, this),
                                                     " Following"
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                                lineNumber: 294,
+                                                lineNumber: 326,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -666,14 +709,14 @@ function ProfilePage() {
                                                         children: followers.length
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                                        lineNumber: 295,
+                                                        lineNumber: 327,
                                                         columnNumber: 20
                                                     }, this),
                                                     " Followers"
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                                lineNumber: 295,
+                                                lineNumber: 327,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -683,20 +726,20 @@ function ProfilePage() {
                                                         children: user.likeCount || 0
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                                        lineNumber: 296,
+                                                        lineNumber: 328,
                                                         columnNumber: 20
                                                     }, this),
                                                     " Likes"
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                                lineNumber: 296,
+                                                lineNumber: 328,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                        lineNumber: 293,
+                                        lineNumber: 325,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -704,7 +747,7 @@ function ProfilePage() {
                                         children: user.bio || "No bio yet."
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                        lineNumber: 299,
+                                        lineNumber: 331,
                                         columnNumber: 15
                                     }, this)
                                 ]
@@ -712,13 +755,13 @@ function ProfilePage() {
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                        lineNumber: 220,
+                        lineNumber: 252,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                lineNumber: 170,
+                lineNumber: 202,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -732,7 +775,7 @@ function ProfilePage() {
                             children: "Videos"
                         }, void 0, false, {
                             fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                            lineNumber: 310,
+                            lineNumber: 342,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -741,18 +784,18 @@ function ProfilePage() {
                             children: "Liked"
                         }, void 0, false, {
                             fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                            lineNumber: 318,
+                            lineNumber: 350,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                    lineNumber: 309,
+                    lineNumber: 341,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                lineNumber: 308,
+                lineNumber: 340,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -769,7 +812,7 @@ function ProfilePage() {
                                     className: "h-full w-full object-cover"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                    lineNumber: 336,
+                                    lineNumber: 368,
                                     columnNumber: 19
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -779,26 +822,26 @@ function ProfilePage() {
                                             className: "mr-1"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                            lineNumber: 342,
+                                            lineNumber: 374,
                                             columnNumber: 21
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                             children: video.likeCount || 0
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                            lineNumber: 343,
+                                            lineNumber: 375,
                                             columnNumber: 21
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                    lineNumber: 341,
+                                    lineNumber: 373,
                                     columnNumber: 19
                                 }, this)
                             ]
                         }, video.id, true, {
                             fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                            lineNumber: 335,
+                            lineNumber: 367,
                             columnNumber: 17
                         }, this)) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "col-span-6 py-20 text-center",
@@ -810,7 +853,7 @@ function ProfilePage() {
                                     children: isOwnProfile ? "Upload your first video" : "No videos yet"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                    lineNumber: 350,
+                                    lineNumber: 382,
                                     columnNumber: 19
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -818,7 +861,7 @@ function ProfilePage() {
                                     children: isOwnProfile ? "Your videos will appear here" : `${user.username} hasn't uploaded any videos yet`
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                    lineNumber: 353,
+                                    lineNumber: 385,
                                     columnNumber: 19
                                 }, this),
                                 isOwnProfile && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$app$2d$dir$2f$link$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
@@ -827,23 +870,23 @@ function ProfilePage() {
                                     children: "Upload now"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                                    lineNumber: 357,
+                                    lineNumber: 389,
                                     columnNumber: 21
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                            lineNumber: 349,
+                            lineNumber: 381,
                             columnNumber: 17
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                        lineNumber: 348,
+                        lineNumber: 380,
                         columnNumber: 15
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                    lineNumber: 332,
+                    lineNumber: 364,
                     columnNumber: 11
                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     className: "py-20 text-center",
@@ -852,23 +895,23 @@ function ProfilePage() {
                         children: "Liked videos are private"
                     }, void 0, false, {
                         fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                        lineNumber: 367,
+                        lineNumber: 399,
                         columnNumber: 13
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                    lineNumber: 366,
+                    lineNumber: 398,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/profile/[userId]/page.jsx",
-                lineNumber: 330,
+                lineNumber: 362,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/profile/[userId]/page.jsx",
-        lineNumber: 168,
+        lineNumber: 200,
         columnNumber: 5
     }, this);
 }

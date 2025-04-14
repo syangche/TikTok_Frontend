@@ -14,18 +14,14 @@ const VideoCard = ({ video }) => {
   const [likeCount, setLikeCount] = useState(video.likeCount || 0);
   const [videoError, setVideoError] = useState(false);
   const videoRef = useRef(null);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isUnmuted, setIsUnmuted] = useState(true);
 
-  // Add this function to your VideoCard component
   const getFullVideoUrl = (url) => {
     if (!url) return null;
 
-    // If it's already a complete URL, return it
     if (url.startsWith("http")) return url;
 
-    // Otherwise, prepend your server URL
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    // Remove the '/api' part if present
     const serverUrl = baseUrl.includes("/api")
       ? baseUrl.substring(0, baseUrl.indexOf("/api"))
       : baseUrl;
@@ -33,7 +29,6 @@ const VideoCard = ({ video }) => {
     return `${serverUrl}${url}`;
   };
 
-  // Then in your video source element:
   <source src={getFullVideoUrl(video.videoUrl)} type="video/mp4" />;
   // Check if the video is already liked by the user
   useEffect(() => {
@@ -128,23 +123,44 @@ const VideoCard = ({ video }) => {
   useEffect(() => {
   if (!videoRef.current) return;
 
-  const observer = new IntersectionObserver(
+const observer = new IntersectionObserver(
     ([entry]) => {
       if (entry.isIntersecting) {
-        // Don't automatically unmute videos - let user control this
-        videoRef.current.play().catch(err => console.log('Autoplay prevented:', err));
-        setIsPlaying(true);
+        // Only try to play if videoRef.current exists
+        if (videoRef.current) {
+          videoRef.current.play()
+            .then(() => {
+              setIsPlaying(true);
+            })
+            .catch(error => {
+              console.error("Video play error:", error);
+              setIsPlaying(false);
+            });
+        }
       } else {
-        videoRef.current.pause();
-        setIsPlaying(false);
+        // Add null check before trying to pause
+        if (videoRef.current) {
+          videoRef.current.pause();
+          setIsPlaying(false);
+        }
       }
     },
     { threshold: 0.7 }
-  );
+);
 
-  observer.observe(videoRef.current);
-  return () => observer.disconnect();
-  }, []);
+const currentVideoRef = videoRef.current;
+
+if (currentVideoRef) {
+    observer.observe(currentVideoRef);
+  }
+
+  // Use the saved reference in the cleanup function
+  return () => {
+    if (currentVideoRef) {
+      observer.unobserve(currentVideoRef);
+    }
+  };
+}, []);
   
   //   return () => {
   //     if (videoRef.current) {
@@ -202,7 +218,7 @@ const VideoCard = ({ video }) => {
                 onClick={togglePlay}
                 className="h-full w-full object-contain"
                 loop
-                muted={isMuted}
+                unmuted="true"
                 playsInline
                 poster={video.thumbnailUrl ? getFullVideoUrl(video.thumbnailUrl) : "https://via.placeholder.com/150"}
               >
@@ -216,11 +232,11 @@ const VideoCard = ({ video }) => {
               <button 
                 onClick={(e) => {
                   e.stopPropagation(); // Prevent video play/pause
-                  setIsMuted(!isMuted);
+                  setIsUnmuted(!isUnmuted);
                 }}
                 className="absolute bottom-4 right-4 bg-black bg-opacity-50 rounded-full p-2 text-white"
               >
-                {isMuted ? 'Unmute' : 'Mute'}
+                {isUnmuted ? 'Mute' : 'Unmute'}
               </button>
 
                 {!isPlaying && (

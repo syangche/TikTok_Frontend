@@ -34,62 +34,94 @@ export default function ProfilePage() {
   // Fetch user profile data
   useEffect(() => {
     const fetchProfileData = async () => {
+  try {
+    setLoading(true);
+    
+    // Fetch user data
+    let userData;
+    try {
+      userData = await getUserById(userId);
+      setUser(userData);
+      setName(userData.name || '');
+      setBio(userData.bio || '');
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      toast.error('Failed to load user data');
+      return; // Exit if we can't get basic user data
+    }
+
+    // Fetch followers/following data
+    if (isAuthenticated && currentUser) {
       try {
-        setLoading(true);
-        const userData = await getUserById(userId);
-        setUser(userData);
-        setName(userData.name || '');
-        setBio(userData.bio || '');
-
-        // Check if current user is following this profile
-        if (isAuthenticated && currentUser) {
-          const followersData = await getUserFollowers(userId);
-          setFollowers(followersData.followers || []);
-          setIsFollowing(followersData.followers?.some(f => f.id === currentUser.id) || false);
-        }
-
-        const followingData = await getUserFollowing(userId);
-        setFollowing(followingData.following || []);
-        
-        // Fetch videos without pagination for now
-        const videosData = await getUserVideos({ userId });
-        setVideos(videosData.videos || []);
+        const followersData = await getUserFollowers(userId);
+        setFollowers(followersData.followers || []);
+        setIsFollowing(followersData.followers?.some(f => f.id === currentUser.id) || false);
       } catch (error) {
-        console.error('Error fetching profile data:', error);
-        toast.error('Failed to load profile data');
-      } finally {
-        setLoading(false);
+        console.error('Error fetching followers:', error);
+        setFollowers([]);
       }
-    };
+    }
 
+    try {
+      const followingData = await getUserFollowing(userId);
+      setFollowing(followingData.following || []);
+    } catch (error) {
+      console.error('Error fetching following:', error);
+      setFollowing([]);
+    }
+    
+    // Fetch videos with better error handling
+    try {
+      const videosData = await getUserVideos(userId);
+      setVideos(videosData.videos || []);
+    } catch (error) {
+      console.error('Error fetching videos:', error);
+      setVideos([]);
+    }
+  } catch (error) {
+    console.error('Error in fetchProfileData:', error);
+    toast.error('Failed to load profile data');
+  } finally {
+    setLoading(false);
+  }
+};
     if (userId) {
       fetchProfileData();
     }
   }, [userId, isAuthenticated, currentUser]);
 
-  const handleFollowToggle = async () => {
-    if (!isAuthenticated) {
-      toast.error('Please log in to follow users');
-      return;
-    }
+  // In your handleFollowToggle function in the profile page
+const handleFollowToggle = async () => {
+  if (!isAuthenticated) {
+    toast.error('Please log in to follow users');
+    return;
+  }
 
-    try {
-      if (isFollowing) {
-        await unfollowUser(userId);
-        setIsFollowing(false);
-        setFollowers(prev => prev.filter(f => f.id !== currentUser.id));
-        toast.success('Unfollowed user');
-      } else {
-        await followUser(userId);
-        setIsFollowing(true);
-        setFollowers(prev => [...prev, currentUser]);
-        toast.success('Following user');
-      }
-    } catch (error) {
-      console.error('Error toggling follow:', error);
-      toast.error('Failed to follow/unfollow user');
+  try {
+    let result;
+    
+    if (isFollowing) {
+      result = await unfollowUser(userId);
+      setIsFollowing(false);
+    } else {
+      result = await followUser(userId);
+      setIsFollowing(true);
     }
-  };
+    
+    // Refresh the profile data to get updated counts
+    const refreshedProfileData = await getUserById(userId);
+    setUser(refreshedProfileData);
+    
+    // Also update followers list
+    const followersData = await getUserFollowers(userId);
+    setFollowers(followersData.followers || []);
+    
+    toast.success(isFollowing ? 'Unfollowed user' : 'Following user');
+  } catch (error) {
+    console.error('Error toggling follow:', error);
+    toast.error('Failed to follow/unfollow user');
+  }
+};
   
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
