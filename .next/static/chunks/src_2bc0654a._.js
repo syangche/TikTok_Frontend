@@ -5,22 +5,22 @@
 
 var { g: global, d: __dirname, k: __turbopack_refresh__, m: module } = __turbopack_context__;
 {
+// src/lib/api-config.js
 __turbopack_context__.s({
     "default": (()=>__TURBOPACK__default__export__)
 });
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/build/polyfills/process.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/axios/lib/axios.js [app-client] (ecmascript)");
 ;
-// Define base URL for our API
-const API_BASE_URL = 'http://localhost:8000/api'; // Adjust port to yours
-// Create main API instance
-const api = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].create({
-    baseURL: API_BASE_URL,
+// Create axios instance with baseURL
+const apiClient = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].create({
+    baseURL: ("TURBOPACK compile-time value", "http://localhost:8000/api") || 'http://localhost:8000/api',
     headers: {
         'Content-Type': 'application/json'
     }
 });
 // Request interceptor for adding authorization
-api.interceptors.request.use((config)=>{
+apiClient.interceptors.request.use((config)=>{
     const token = localStorage.getItem('token');
     if (token) {
         config.headers['Authorization'] = `Bearer ${token}`;
@@ -29,17 +29,7 @@ api.interceptors.request.use((config)=>{
 }, (error)=>{
     return Promise.reject(error);
 });
-// Response interceptor for handling errors
-api.interceptors.response.use((response)=>response, (error)=>{
-    // Handle token expiration
-    if (error.response && error.response.status === 401) {
-        localStorage.removeItem('token');
-        // Optionally redirect to login
-        window.location.href = '/login';
-    }
-    return Promise.reject(error);
-});
-const __TURBOPACK__default__export__ = api;
+const __TURBOPACK__default__export__ = apiClient;
 if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
     __turbopack_context__.k.registerExports(module, globalThis.$RefreshHelpers$);
 }

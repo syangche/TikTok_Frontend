@@ -1,9 +1,16 @@
 import apiClient from '../lib/axios';
 
 
-export const getVideos = async (page = 1, limit = 10) => {
+//uses cursor-based pagination
+export const getVideos = async ({ cursor, limit = 10 }) => {
   try {
-    const response = await apiClient.get(`/videos?page=${page}&limit=${limit}`);
+    // Build query string with cursor if available
+    let queryParams = `limit=${limit}`;
+    if (cursor) {
+      queryParams += `&cursor=${cursor}`;
+    }
+    
+    const response = await apiClient.get(`/videos?${queryParams}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching videos:', error);
@@ -11,7 +18,21 @@ export const getVideos = async (page = 1, limit = 10) => {
   }
 };
 
-// Other functions can stay the same
+// uses cursor-based pagination for Following feed
+export const getFollowingVideos = async ({ cursor, limit = 10 }) => {
+  try {
+    let queryParams = `limit=${limit}`;
+    if (cursor) {
+      queryParams += `&cursor=${cursor}`;
+    }
+    
+    const response = await apiClient.get(`/videos/following?${queryParams}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching following videos:', error);
+    throw error;
+  }
+};
 
 export const getVideoById = async (id) => {
   try {
@@ -23,36 +44,32 @@ export const getVideoById = async (id) => {
   }
 };
 
-// In videoService.js
-export const getUserVideos = async (userId) => {
+//uses cursor-based pagination
+export const getUserVideos = async ({ userId, cursor, limit = 10 }) => {
   try {
-    console.log(`Fetching videos for user ID: ${userId}`);
-    
-    if (!userId) {
-      console.error('getUserVideos called without userId');
-      return { videos: [] };
+    let queryParams = `limit=${limit}`;
+    if (cursor) {
+      queryParams += `&cursor=${cursor}`;
     }
     
-    const response = await apiClient.get(`/users/${userId}/videos`);
-    console.log(`Received ${response.data.videos?.length || 0} videos for user ${userId}`);
+    const response = await apiClient.get(`/users/${userId}/videos?${queryParams}`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching videos for user ${userId}:`, error);
-    // Return empty data to prevent UI errors
-    return { videos: [] };
+    throw error;
   }
 };
 
-export const getFollowingVideos = async () => {
+export const getVideoComments = async (videoId) => {
   try {
-    const response = await apiClient.get('/videos/following');
+    const response = await apiClient.get(`/videos/${videoId}/comments`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching following videos:', error);
-      // throw error;
-      return { videos: [] };
+    console.error(`Error fetching comments for video ${videoId}:`, error);
+    return { comments: [] };
   }
 };
+
 
 export const likeVideo = async (videoId) => {
   try {
@@ -74,15 +91,6 @@ export const unlikeVideo = async (videoId) => {
   }
 };
 
-export const getVideoComments = async (videoId) => {
-  try {
-    const response = await apiClient.get(`/videos/${videoId}/comments`);
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching comments for video ${videoId}:`, error);
-    return { comments: [] };
-  }
-};
 
 export const addComment = async (videoId, content) => {
   try {

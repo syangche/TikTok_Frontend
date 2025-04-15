@@ -10,20 +10,13 @@ export const getUserById = async (userId) => {
   }
 };
 
-export const updateUser = async (userId, userData) => {
+export const updateUser = async (userId, formData) => {
   try {
-    console.log("Updating user:", userId);
-    // Log FormData contents for debugging (can't directly log FormData)
-    if (userData instanceof FormData) {
-      console.log("FormData contains avatar:", userData.has('avatar'));
-    }
-    
-    const response = await apiClient.put(`/users/${userId}`, userData, {
-      headers: userData instanceof FormData ? 
-        { 'Content-Type': 'multipart/form-data' } : 
-        { 'Content-Type': 'application/json' }
+    const response = await apiClient.put(`/users/${userId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data', // Important for file uploads
+      },
     });
-    
     return response.data;
   } catch (error) {
     console.error(`Error updating user ${userId}:`, error);

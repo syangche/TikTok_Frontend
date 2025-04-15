@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { FaHeart, FaComment, FaShare, FaMusic } from "react-icons/fa";
+import { FaHeart, FaComment, FaShare, FaMusic, FaVolumeMute, FaVolumeUp } from "react-icons/fa";
 import { useAuth } from "../../contexts/authContext";
 import { likeVideo, unlikeVideo } from "../../services/videoService";
 import toast from "react-hot-toast";
@@ -14,7 +14,7 @@ const VideoCard = ({ video }) => {
   const [likeCount, setLikeCount] = useState(video.likeCount || 0);
   const [videoError, setVideoError] = useState(false);
   const videoRef = useRef(null);
-  const [isUnmuted, setIsUnmuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
 
   const getFullVideoUrl = (url) => {
     if (!url) return null;
@@ -29,7 +29,6 @@ const VideoCard = ({ video }) => {
     return `${serverUrl}${url}`;
   };
 
-  <source src={getFullVideoUrl(video.videoUrl)} type="video/mp4" />;
   // Check if the video is already liked by the user
   useEffect(() => {
     console.log("Video URL:", video.videoUrl);
@@ -37,16 +36,33 @@ const VideoCard = ({ video }) => {
     if (user && video.likes) {
       setIsLiked(video.likes.some((like) => like.userId === user.id));
     }
-  }, [user, video.likes]);
+  }, [user, video.likes, video.videoUrl]);
 
   const togglePlay = () => {
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause();
+        setIsPlaying(false);
       } else {
-        videoRef.current.play();
+        const playPromise = videoRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              setIsPlaying(true);
+            })
+            .catch((error) => {
+              console.error("Error playing video:", error);
+            });
+        }
       }
-      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const toggleMute = (e) => {
+    e.stopPropagation(); // Prevent triggering play/pause
+    if (videoRef.current) {
+      videoRef.current.muted = !videoRef.current.muted;
+      setIsMuted(videoRef.current.muted);
     }
   };
 
@@ -72,102 +88,58 @@ const VideoCard = ({ video }) => {
     }
   };
 
-  // Observe video visibility for autoplay
-  // useEffect(() => {
-  //   if (!videoRef.current) return;
-
-  //   const observer = new IntersectionObserver(
-  //     ([entry]) => {
-  //       if (entry.isIntersecting) {
-  //         // Add a slight delay before attempting to play
-  //         setTimeout(() => {
-  //           // Use muted attribute to increase chances of autoplay working
-  //           if (videoRef.current) {
-  //             videoRef.current.muted = true;
-
-  //             // Use try-catch to handle potential errors
-  //             try {
-  //               const playPromise = videoRef.current.play();
-
-  //               // Handle the play promise
-  //               if (playPromise !== undefined) {
-  //                 playPromise
-  //                   .then(() => {
-  //                     setIsPlaying(true);
-  //                   })
-  //                   .catch((error) => {
-  //                     console.log("Autoplay prevented:", error);
-  //                     setIsPlaying(false);
-  //                   });
-  //               }
-  //             } catch (error) {
-  //               console.log("Play error:", error);
-  //             }
-  //           }
-  //         }, 100);
-  //       } else {
-  //         // Only pause if currently playing to avoid unnecessary calls
-  //         if (isPlaying && videoRef.current) {
-  //           videoRef.current.pause();
-  //           setIsPlaying(false);
-  //         }
-  //       }
-  //     },
-  //     { threshold: 0.7 }
-  //   );
-
-  //   if (videoRef.current) {
-  //     observer.observe(videoRef.current);
-  //   }
-
+  // Improved intersection observer for autoplay
   useEffect(() => {
-  if (!videoRef.current) return;
+    if (!videoRef.current) return;
 
-const observer = new IntersectionObserver(
-    ([entry]) => {
-      if (entry.isIntersecting) {
-        // Only try to play if videoRef.current exists
-        if (videoRef.current) {
-          videoRef.current.play()
-            .then(() => {
-              setIsPlaying(true);
-            })
-            .catch(error => {
-              console.error("Video play error:", error);
-              setIsPlaying(false);
-            });
+    let isPaused = false;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        
+        if (entry.isIntersecting) {
+          // Small delay to prevent rapid play/pause cycles
+          setTimeout(() => {
+            if (videoRef.current && !isPaused) {
+              const playPromise = videoRef.current.play();
+              if (playPromise !== undefined) {
+                playPromise
+                  .then(() => {
+                    setIsPlaying(true);
+                  })
+                  .catch((error) => {
+                    console.error("Autoplay prevented:", error);
+                    setIsPlaying(false);
+                  });
+              }
+            }
+          }, 50);
+        } else {
+          if (videoRef.current) {
+            isPaused = true;
+            videoRef.current.pause();
+            setIsPlaying(false);
+            setTimeout(() => {
+              isPaused = false;
+            }, 100);
+          }
         }
-      } else {
-        // Add null check before trying to pause
-        if (videoRef.current) {
-          videoRef.current.pause();
-          setIsPlaying(false);
-        }
-      }
-    },
-    { threshold: 0.7 }
-);
+      },
+      { threshold: 0.6 }
+    );
 
-const currentVideoRef = videoRef.current;
-
-if (currentVideoRef) {
-    observer.observe(currentVideoRef);
-  }
-
-  // Use the saved reference in the cleanup function
-  return () => {
-    if (currentVideoRef) {
-      observer.unobserve(currentVideoRef);
+    const currentVideo = videoRef.current;
+    if (currentVideo) {
+      observer.observe(currentVideo);
     }
-  };
-}, []);
-  
-  //   return () => {
-  //     if (videoRef.current) {
-  //       observer.unobserve(videoRef.current);
-  //     }
-  //   };
-  // }, [isPlaying]);
+
+    return () => {
+      if (currentVideo) {
+        observer.unobserve(currentVideo);
+      }
+    };
+  }, []);
 
   const handleVideoError = () => {
     console.error("Video failed to load:", video.videoUrl);
@@ -214,30 +186,28 @@ if (currentVideoRef) {
             {!videoError ? (
               <>
                 <video
-                ref={videoRef}
-                onClick={togglePlay}
-                className="h-full w-full object-contain"
-                loop
-                unmuted="true"
-                playsInline
-                poster={video.thumbnailUrl ? getFullVideoUrl(video.thumbnailUrl) : "https://via.placeholder.com/150"}
-              >
-                <source 
-                  src={getFullVideoUrl(video.videoUrl)} 
-                  type="video/mp4" 
-                />
-              </video>
+                  ref={videoRef}
+                  onClick={togglePlay}
+                  className="h-full w-full object-contain"
+                  loop
+                  muted={isMuted} 
+                  playsInline
+                  poster={video.thumbnailUrl ? getFullVideoUrl(video.thumbnailUrl) : "https://via.placeholder.com/150"}
+                  onError={handleVideoError}
+                >
+                  <source 
+                    src={getFullVideoUrl(video.videoUrl)} 
+                    type="video/mp4" 
+                  />
+                </video>
 
-              {/* Add a mute/unmute button */}
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation(); // Prevent video play/pause
-                  setIsUnmuted(!isUnmuted);
-                }}
-                className="absolute bottom-4 right-4 bg-black bg-opacity-50 rounded-full p-2 text-white"
-              >
-                {isUnmuted ? 'Mute' : 'Unmute'}
-              </button>
+                {/* Add a mute/unmute button */}
+                <button 
+                  onClick={toggleMute}
+                  className="absolute bottom-4 right-4 bg-black bg-opacity-50 rounded-full p-2 text-white z-10"
+                >
+                  {isMuted ? <FaVolumeMute size={20} /> : <FaVolumeUp size={20} />}
+                </button>
 
                 {!isPlaying && (
                   <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform text-white">
@@ -250,22 +220,7 @@ if (currentVideoRef) {
             ) : (
               <div className="flex h-full w-full flex-col items-center justify-center bg-black text-white">
                 <p className="mb-2">Video unavailable</p>
-                <p className="text-sm text-gray-400">Using fallback video</p>
-
-                {/* Fallback video */}
-                <video
-                  ref={videoRef}
-                  onClick={togglePlay}
-                  className="h-full w-full object-contain"
-                  loop
-                  muted
-                  playsInline
-                >
-                  <source
-                    src="https://assets.mixkit.co/videos/preview/mixkit-spinning-around-the-earth-29351-large.mp4"
-                    type="video/mp4"
-                  />
-                </video>
+                <p className="text-sm text-gray-400">Unable to load video</p>
               </div>
             )}
           </div>

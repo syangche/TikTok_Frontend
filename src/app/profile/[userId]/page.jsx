@@ -2,14 +2,12 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useInfiniteQuery } from '@tanstack/react-query';
 import { FaEdit, FaUserPlus, FaUserCheck, FaRegHeart, FaUpload } from 'react-icons/fa';
 import { getUserById, followUser, unfollowUser, getUserFollowers, getUserFollowing, updateUser } from '../../../services/userService';
 import { getUserVideos } from '../../../services/videoService';
 import { useAuth } from '../../../contexts/authContext';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
-// import useIntersectionObserver from '@react-hook/intersection-observer';
 
 export default function ProfilePage() {
   const { userId } = useParams();
@@ -31,46 +29,26 @@ export default function ProfilePage() {
   const [avatarPreview, setAvatarPreview] = useState(null);
   const avatarInputRef = useRef(null);
   
-  // Fetch user profile data
-  useEffect(() => {
-    const fetchProfileData = async () => {
+  // Function to refresh all profile data
+  const refreshProfileData = async () => {
   try {
-    setLoading(true);
+    // Fetch fresh user data
+    const userData = await getUserById(userId);
+    setUser(userData);
+    setName(userData.name || '');
+    setBio(userData.bio || '');
     
-    // Fetch user data
-    let userData;
-    try {
-      userData = await getUserById(userId);
-      setUser(userData);
-      setName(userData.name || '');
-      setBio(userData.bio || '');
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-      toast.error('Failed to load user data');
-      return; // Exit if we can't get basic user data
-    }
-
-    // Fetch followers/following data
+    // Fetch fresh followers/following data
     if (isAuthenticated && currentUser) {
-      try {
-        const followersData = await getUserFollowers(userId);
-        setFollowers(followersData.followers || []);
-        setIsFollowing(followersData.followers?.some(f => f.id === currentUser.id) || false);
-      } catch (error) {
-        console.error('Error fetching followers:', error);
-        setFollowers([]);
-      }
-    }
-
-    try {
-      const followingData = await getUserFollowing(userId);
-      setFollowing(followingData.following || []);
-    } catch (error) {
-      console.error('Error fetching following:', error);
-      setFollowing([]);
+      const followersData = await getUserFollowers(userId);
+      setFollowers(followersData.followers || []);
+      setIsFollowing(followersData.followers?.some(f => f.id === currentUser.id) || false);
     }
     
-    // Fetch videos with better error handling
+    const followingData = await getUserFollowing(userId);
+    setFollowing(followingData.following || []);
+    
+    // Fetch fresh videos - simplified call
     try {
       const videosData = await getUserVideos(userId);
       setVideos(videosData.videos || []);
@@ -79,50 +57,103 @@ export default function ProfilePage() {
       setVideos([]);
     }
   } catch (error) {
-    console.error('Error in fetchProfileData:', error);
-    toast.error('Failed to load profile data');
-  } finally {
-    setLoading(false);
+    console.error('Error refreshing profile data:', error);
+    toast.error('Failed to refresh profile data');
   }
 };
+  
+  // Fetch user profile data
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch user data
+        let userData;
+        try {
+          userData = await getUserById(userId);
+          setUser(userData);
+          setName(userData.name || '');
+          setBio(userData.bio || '');
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+          toast.error('Failed to load user data');
+          return; // Exit if we can't get basic user data
+        }
+
+        // Fetch followers/following data
+        if (isAuthenticated && currentUser) {
+          try {
+            const followersData = await getUserFollowers(userId);
+            setFollowers(followersData.followers || []);
+            setIsFollowing(followersData.followers?.some(f => f.id === currentUser.id) || false);
+          } catch (error) {
+            console.error('Error fetching followers:', error);
+            setFollowers([]);
+          }
+        }
+
+        try {
+          const followingData = await getUserFollowing(userId);
+          setFollowing(followingData.following || []);
+        } catch (error) {
+          console.error('Error fetching following:', error);
+          setFollowing([]);
+        }
+        
+        // Fetch videos with better error handling
+        try {
+          const videosData = await getUserVideos(userId);
+          setVideos(videosData.videos || []);
+        } catch (error) {
+          console.error('Error fetching videos:', error);
+          setVideos([]);
+        }
+      } catch (error) {
+        console.error('Error in fetchProfileData:', error);
+        toast.error('Failed to load profile data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
     if (userId) {
       fetchProfileData();
     }
   }, [userId, isAuthenticated, currentUser]);
 
-  // In your handleFollowToggle function in the profile page
-const handleFollowToggle = async () => {
-  if (!isAuthenticated) {
-    toast.error('Please log in to follow users');
-    return;
-  }
-
-  try {
-    let result;
-    
-    if (isFollowing) {
-      result = await unfollowUser(userId);
-      setIsFollowing(false);
-    } else {
-      result = await followUser(userId);
-      setIsFollowing(true);
+  // Add an effect to refresh when userId changes
+  useEffect(() => {
+    if (userId && !loading) {
+      refreshProfileData();
     }
-    
-    // Refresh the profile data to get updated counts
-    const refreshedProfileData = await getUserById(userId);
-    setUser(refreshedProfileData);
-    
-    // Also update followers list
-    const followersData = await getUserFollowers(userId);
-    setFollowers(followersData.followers || []);
-    
-    toast.success(isFollowing ? 'Unfollowed user' : 'Following user');
-  } catch (error) {
-    console.error('Error toggling follow:', error);
-    toast.error('Failed to follow/unfollow user');
-  }
-};
+  }, [userId]);
+
+  // Handle follow/unfollow
+  const handleFollowToggle = async () => {
+    if (!isAuthenticated) {
+      toast.error('Please log in to follow users');
+      return;
+    }
+
+    try {
+      if (isFollowing) {
+        await unfollowUser(userId);
+      } else {
+        await followUser(userId);
+      }
+      
+      // Refresh all profile data
+      await refreshProfileData();
+      
+      toast.success(isFollowing ? 'Unfollowed user' : 'Following user');
+    } catch (error) {
+      console.error('Error toggling follow:', error);
+      toast.error('Failed to follow/unfollow user');
+    }
+  };
   
+  // Handle avatar file selection
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -136,6 +167,7 @@ const handleFollowToggle = async () => {
     setAvatarPreview(URL.createObjectURL(file));
   };
   
+  // Handle profile update submission
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
     
@@ -147,24 +179,23 @@ const handleFollowToggle = async () => {
         formData.append('avatar', avatarFile);
       }
       
-      await updateUser(userId, formData);
+      const updatedUser = await updateUser(userId, formData);
       
-      // Update the user state with new data
-      setUser(prev => ({
-        ...prev,
-        name,
-        bio,
-        avatar: avatarPreview || prev.avatar
-      }));
+      // Update the user state with the response from the server
+      setUser(updatedUser);
       
       setIsEditing(false);
       toast.success('Profile updated successfully');
+      
+      // Refresh profile data to ensure everything is up to date
+      await refreshProfileData();
     } catch (error) {
       console.error('Error updating profile:', error);
       toast.error('Failed to update profile');
     }
   };
 
+  // Helper function to get full URL for images/videos
   const getFullVideoUrl = (url) => {
     if (!url) return null;
     

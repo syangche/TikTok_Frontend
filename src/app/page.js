@@ -2,9 +2,9 @@ import VideoFeed from '../components/ui/VideoFeed';
 
 export default function Home() {
   return (
-    <div className="py-4">
-            <VideoFeed feedType="forYou" />
-    </div>
+    <main className="flex min-h-screen flex-col items-center">
+      <VideoFeed feedType="forYou" />
+    </main>
   );
 }
 

@@ -1,11 +1,3 @@
 {
-  "/page": "app/page.js",
-  "/following/page": "app/following/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/explore-users/page": "app/explore-users/page.js",
-  "/profile/[userId]/page": "app/profile/[userId]/page.js",
-  "/upload/page": "app/upload/page.js",
-  "/_not-found/page": "app/_not-found/page.js",
-  "/explore/page": "app/explore/page.js",
-  "/video/[videoId]/page": "app/video/[videoId]/page.js"
+  "/page": "app/page.js"
 }
