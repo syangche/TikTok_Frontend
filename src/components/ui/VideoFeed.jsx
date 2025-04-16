@@ -54,7 +54,7 @@ const VideoFeed = ({ feedType = 'forYou' }) => {
   if (status === 'pending' && !data) {
     return (
       <div className="flex justify-center py-10">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-pink-500 border-t-transparent"></div>
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
       </div>
     );
   }
@@ -66,7 +66,7 @@ const VideoFeed = ({ feedType = 'forYou' }) => {
         <p className="text-red-500">Failed to load videos</p>
         <button
           onClick={() => fetchNextPage({ cancelRefetch: true })}
-          className="mt-4 rounded-lg bg-pink-500 px-4 py-2 text-white"
+          className="mt-4 rounded-lg bg-blue-500 px-4 py-2 text-white"
         >
           Try Again
         </button>
@@ -106,7 +106,7 @@ const VideoFeed = ({ feedType = 'forYou' }) => {
       {/* Loading indicator for next page */}
       {isFetchingNextPage && (
         <div className="flex justify-center py-5">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-pink-500 border-t-transparent"></div>
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
         </div>
       )}
       

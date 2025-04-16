@@ -33,24 +33,23 @@ export default function ProfilePage() {
   const refreshProfileData = async () => {
   try {
     // Fetch fresh user data
-    const userData = await getUserById(userId);
+    const userData = await getUserById(id);
     setUser(userData);
     setName(userData.name || '');
     setBio(userData.bio || '');
     
     // Fetch fresh followers/following data
     if (isAuthenticated && currentUser) {
-      const followersData = await getUserFollowers(userId);
+      const followersData = await getUserFollowers(id);
       setFollowers(followersData.followers || []);
       setIsFollowing(followersData.followers?.some(f => f.id === currentUser.id) || false);
     }
     
-    const followingData = await getUserFollowing(userId);
+    const followingData = await getUserFollowing(id);
     setFollowing(followingData.following || []);
     
-    // Fetch fresh videos - simplified call
     try {
-      const videosData = await getUserVideos(userId);
+      const videosData = await getUserVideos(id);
       setVideos(videosData.videos || []);
     } catch (error) {
       console.error('Error fetching videos:', error);

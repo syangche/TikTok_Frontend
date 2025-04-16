@@ -45,17 +45,17 @@ export const getVideoById = async (id) => {
 };
 
 //uses cursor-based pagination
-export const getUserVideos = async ({ userId, cursor, limit = 10 }) => {
+export const getUserVideos = async ({ id, cursor, limit = 10 }) => {
   try {
     let queryParams = `limit=${limit}`;
     if (cursor) {
       queryParams += `&cursor=${cursor}`;
     }
     
-    const response = await apiClient.get(`/users/${userId}/videos?${queryParams}`);
+    const response = await apiClient.get(`/users/${id}/videos?${queryParams}`);
     return response.data;
   } catch (error) {
-    console.error(`Error fetching videos for user ${userId}:`, error);
+    console.error(`Error fetching videos for user ${id}:`, error);
     throw error;
   }
 };

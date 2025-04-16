@@ -45,7 +45,6 @@ export default function SignupPage() {
     }
   };
 
-  // Rest of your form remains the same
 
   return (
     <div className="flex flex-col items-center justify-center py-8 px-4">

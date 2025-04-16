@@ -12,18 +12,14 @@ __turbopack_context__.s({
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/jsx-dev-runtime.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/navigation.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$contexts$2f$authContext$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/contexts/authContext.js [app-client] (ecmascript)");
 (()=>{
-    const e = new Error("Cannot find module '@/contexts/authContext'");
+    const e = new Error("Cannot find module '@/services/uploadService'");
     e.code = 'MODULE_NOT_FOUND';
     throw e;
 })();
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/react-hot-toast/dist/index.mjs [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$icons$2f$fa$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/react-icons/fa/index.mjs [app-client] (ecmascript)");
-(()=>{
-    const e = new Error("Cannot find module '@/lib/api-config'");
-    e.code = 'MODULE_NOT_FOUND';
-    throw e;
-})();
 ;
 var _s = __turbopack_context__.k.signature();
 'use client';
@@ -35,7 +31,7 @@ var _s = __turbopack_context__.k.signature();
 ;
 const UploadPage = ()=>{
     _s();
-    const { isAuthenticated } = useAuth();
+    const { user, isAuthenticated } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$contexts$2f$authContext$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useAuth"])();
     const router = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRouter"])();
     const [videoFile, setVideoFile] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const [thumbnailFile, setThumbnailFile] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
@@ -43,6 +39,7 @@ const UploadPage = ()=>{
     const [thumbnailPreview, setThumbnailPreview] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const [caption, setCaption] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])('');
     const [uploading, setUploading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
+    const [uploadProgress, setUploadProgress] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(0);
     const videoInputRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
     const thumbnailInputRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
     // Redirect if not authenticated
@@ -86,22 +83,41 @@ const UploadPage = ()=>{
         }
         try {
             setUploading(true);
-            const formData = new FormData();
-            formData.append('video', videoFile);
-            if (thumbnailFile) {
-                formData.append('thumbnail', thumbnailFile);
-            }
-            formData.append('caption', caption);
-            const response = await apiClient.post('/videos', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
+            setUploadProgress(0);
+            // Step 1: Upload video directly to Supabase
+            const uploadToast = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].loading('Uploading video... 0%');
+            const videoUploadResult = await uploadVideoToStorage(user.id, videoFile);
+            setUploadProgress(50);
+            __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].loading('Uploading video... 50%', {
+                id: uploadToast
             });
-            __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].success('Video uploaded successfully!');
+            let thumbnailUploadResult = null;
+            if (thumbnailFile) {
+                thumbnailUploadResult = await uploadThumbnailToStorage(user.id, thumbnailFile);
+            }
+            setUploadProgress(75);
+            __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].loading('Uploading video... 75%', {
+                id: uploadToast
+            });
+            // Step 2: Create video in the database with the Supabase URLs
+            const videoData = {
+                caption,
+                videoUrl: videoUploadResult.url,
+                videoStoragePath: videoUploadResult.storagePath
+            };
+            if (thumbnailUploadResult) {
+                videoData.thumbnailUrl = thumbnailUploadResult.url;
+                videoData.thumbnailStoragePath = thumbnailUploadResult.storagePath;
+            }
+            await createVideo(videoData);
+            setUploadProgress(100);
+            __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].success('Video uploaded successfully!', {
+                id: uploadToast
+            });
             router.push('/');
         } catch (error) {
             console.error('Upload error:', error);
-            __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].error(error.response?.data?.message || 'Failed to upload video');
+            __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].error(error.message || 'Failed to upload video');
         } finally{
             setUploading(false);
         }
@@ -114,7 +130,7 @@ const UploadPage = ()=>{
                 children: "Upload Video"
             }, void 0, false, {
                 fileName: "[project]/src/app/upload/page.jsx",
-                lineNumber: 101,
+                lineNumber: 120,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -132,7 +148,7 @@ const UploadPage = ()=>{
                                         children: "Video"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/upload/page.jsx",
-                                        lineNumber: 108,
+                                        lineNumber: 127,
                                         columnNumber: 15
                                     }, this),
                                     videoPreview ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -143,12 +159,12 @@ const UploadPage = ()=>{
                                             controls: true
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/upload/page.jsx",
-                                            lineNumber: 111,
+                                            lineNumber: 130,
                                             columnNumber: 19
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/upload/page.jsx",
-                                        lineNumber: 110,
+                                        lineNumber: 129,
                                         columnNumber: 17
                                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                         onClick: ()=>videoInputRef.current?.click(),
@@ -159,7 +175,7 @@ const UploadPage = ()=>{
                                                 className: "mb-2 text-gray-400"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/upload/page.jsx",
-                                                lineNumber: 122,
+                                                lineNumber: 141,
                                                 columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -168,7 +184,7 @@ const UploadPage = ()=>{
                                                     "Click to upload a video",
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("br", {}, void 0, false, {
                                                         fileName: "[project]/src/app/upload/page.jsx",
-                                                        lineNumber: 125,
+                                                        lineNumber: 144,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -176,19 +192,19 @@ const UploadPage = ()=>{
                                                         children: "MP4 or WebM (max 100MB)"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/upload/page.jsx",
-                                                        lineNumber: 126,
+                                                        lineNumber: 145,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/upload/page.jsx",
-                                                lineNumber: 123,
+                                                lineNumber: 142,
                                                 columnNumber: 19
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/upload/page.jsx",
-                                        lineNumber: 118,
+                                        lineNumber: 137,
                                         columnNumber: 17
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -199,7 +215,7 @@ const UploadPage = ()=>{
                                         className: "hidden"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/upload/page.jsx",
-                                        lineNumber: 130,
+                                        lineNumber: 149,
                                         columnNumber: 15
                                     }, this),
                                     videoFile && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -210,7 +226,7 @@ const UploadPage = ()=>{
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/upload/page.jsx",
-                                        lineNumber: 138,
+                                        lineNumber: 157,
                                         columnNumber: 17
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
@@ -218,7 +234,7 @@ const UploadPage = ()=>{
                                         children: "Thumbnail (Optional)"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/upload/page.jsx",
-                                        lineNumber: 144,
+                                        lineNumber: 163,
                                         columnNumber: 15
                                     }, this),
                                     thumbnailPreview ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -229,12 +245,12 @@ const UploadPage = ()=>{
                                             className: "h-full w-full object-contain"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/upload/page.jsx",
-                                            lineNumber: 147,
+                                            lineNumber: 166,
                                             columnNumber: 19
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/upload/page.jsx",
-                                        lineNumber: 146,
+                                        lineNumber: 165,
                                         columnNumber: 17
                                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                         onClick: ()=>thumbnailInputRef.current?.click(),
@@ -245,7 +261,7 @@ const UploadPage = ()=>{
                                                 className: "mb-2 text-gray-400"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/upload/page.jsx",
-                                                lineNumber: 158,
+                                                lineNumber: 177,
                                                 columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -254,7 +270,7 @@ const UploadPage = ()=>{
                                                     "Click to upload a thumbnail",
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("br", {}, void 0, false, {
                                                         fileName: "[project]/src/app/upload/page.jsx",
-                                                        lineNumber: 161,
+                                                        lineNumber: 180,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -262,19 +278,19 @@ const UploadPage = ()=>{
                                                         children: "JPG, PNG or GIF"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/upload/page.jsx",
-                                                        lineNumber: 162,
+                                                        lineNumber: 181,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/upload/page.jsx",
-                                                lineNumber: 159,
+                                                lineNumber: 178,
                                                 columnNumber: 19
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/upload/page.jsx",
-                                        lineNumber: 154,
+                                        lineNumber: 173,
                                         columnNumber: 17
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -285,7 +301,7 @@ const UploadPage = ()=>{
                                         className: "hidden"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/upload/page.jsx",
-                                        lineNumber: 166,
+                                        lineNumber: 185,
                                         columnNumber: 15
                                     }, this),
                                     thumbnailFile && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -296,13 +312,13 @@ const UploadPage = ()=>{
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/upload/page.jsx",
-                                        lineNumber: 174,
+                                        lineNumber: 193,
                                         columnNumber: 17
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/upload/page.jsx",
-                                lineNumber: 107,
+                                lineNumber: 126,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -315,7 +331,7 @@ const UploadPage = ()=>{
                                                 children: "Caption"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/upload/page.jsx",
-                                                lineNumber: 183,
+                                                lineNumber: 202,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("textarea", {
@@ -327,7 +343,7 @@ const UploadPage = ()=>{
                                                 maxLength: "150"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/upload/page.jsx",
-                                                lineNumber: 186,
+                                                lineNumber: 205,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -338,14 +354,52 @@ const UploadPage = ()=>{
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/upload/page.jsx",
-                                                lineNumber: 194,
+                                                lineNumber: 213,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/upload/page.jsx",
-                                        lineNumber: 182,
+                                        lineNumber: 201,
                                         columnNumber: 15
+                                    }, this),
+                                    uploading && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "mb-4",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                className: "w-full bg-gray-200 rounded-full h-2.5",
+                                                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                    className: "bg-pink-500 h-2.5 rounded-full",
+                                                    style: {
+                                                        width: `${uploadProgress}%`
+                                                    }
+                                                }, void 0, false, {
+                                                    fileName: "[project]/src/app/upload/page.jsx",
+                                                    lineNumber: 221,
+                                                    columnNumber: 21
+                                                }, this)
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/upload/page.jsx",
+                                                lineNumber: 220,
+                                                columnNumber: 19
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                className: "mt-1 text-center text-xs text-gray-500",
+                                                children: [
+                                                    "Uploading: ",
+                                                    uploadProgress,
+                                                    "%"
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/src/app/upload/page.jsx",
+                                                lineNumber: 226,
+                                                columnNumber: 19
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/src/app/upload/page.jsx",
+                                        lineNumber: 219,
+                                        columnNumber: 17
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                         type: "submit",
@@ -358,53 +412,53 @@ const UploadPage = ()=>{
                                                     className: "mr-2 animate-spin"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/upload/page.jsx",
-                                                    lineNumber: 206,
+                                                    lineNumber: 239,
                                                     columnNumber: 21
                                                 }, this),
                                                 " Uploading..."
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/upload/page.jsx",
-                                            lineNumber: 205,
+                                            lineNumber: 238,
                                             columnNumber: 19
                                         }, this) : 'Post'
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/upload/page.jsx",
-                                        lineNumber: 199,
+                                        lineNumber: 232,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/upload/page.jsx",
-                                lineNumber: 181,
+                                lineNumber: 200,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/upload/page.jsx",
-                        lineNumber: 105,
+                        lineNumber: 124,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/app/upload/page.jsx",
-                    lineNumber: 104,
+                    lineNumber: 123,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/upload/page.jsx",
-                lineNumber: 103,
+                lineNumber: 122,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/upload/page.jsx",
-        lineNumber: 100,
+        lineNumber: 119,
         columnNumber: 5
     }, this);
 };
-_s(UploadPage, "20yN2DTer21I3k9X3R5N7rwljrM=", false, function() {
+_s(UploadPage, "2U4VszX9y0EY1HBkxk0yNYhrjQA=", false, function() {
     return [
-        useAuth,
+        __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$contexts$2f$authContext$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useAuth"],
         __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRouter"]
     ];
 });

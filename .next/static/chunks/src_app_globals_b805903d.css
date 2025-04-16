@@ -481,6 +481,10 @@
     aspect-ratio: var(--aspect-video);
   }
 
+  .h-2\.5 {
+    height: calc(var(--spacing) * 2.5);
+  }
+
   .h-6 {
     height: calc(var(--spacing) * 6);
   }
@@ -842,10 +846,6 @@
 
   .bg-gray-300 {
     background-color: var(--color-gray-300);
-  }
-
-  .bg-pink-500 {
-    background-color: var(--color-pink-500);
   }
 
   .bg-red-50 {

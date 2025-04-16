@@ -17,27 +17,22 @@ const VideoCard = ({ video }) => {
   const [isMuted, setIsMuted] = useState(false);
 
   const getFullVideoUrl = (url) => {
-    if (!url) return null;
-
-    if (url.startsWith("http")) return url;
-
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    const serverUrl = baseUrl.includes("/api")
-      ? baseUrl.substring(0, baseUrl.indexOf("/api"))
-      : baseUrl;
-
-    return `${serverUrl}${url}`;
+  if (!url) return null;
+  
+  // Supabase URLs are already complete, so just return them
+  if (url.includes('supabase') || url.startsWith('http')) {
+    return url;
+  }
+  
+  // Fall back to the old method for any local URLs
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+  const serverUrl = baseUrl.includes('/api') 
+    ? baseUrl.substring(0, baseUrl.indexOf('/api')) 
+    : baseUrl;
+  
+  return `${serverUrl}${url}`;
   };
-
-  // Check if the video is already liked by the user
-  useEffect(() => {
-    console.log("Video URL:", video.videoUrl);
-    console.log("Full video URL:", getFullVideoUrl(video.videoUrl));
-    if (user && video.likes) {
-      setIsLiked(video.likes.some((like) => like.userId === user.id));
-    }
-  }, [user, video.likes, video.videoUrl]);
-
+  
   const togglePlay = () => {
     if (videoRef.current) {
       if (isPlaying) {

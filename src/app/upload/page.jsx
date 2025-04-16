@@ -1,15 +1,14 @@
-// In src/app/upload/page.jsx
 'use client';
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/authContext';
+import { uploadVideoToStorage, uploadThumbnailToStorage, createVideo } from '../../services/uploadService';
 import toast from 'react-hot-toast';
 import { FaCloudUploadAlt, FaSpinner } from 'react-icons/fa';
-import apiClient from '../../lib/api-config.js';
 
 const UploadPage = () => {
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const router = useRouter();
   const [videoFile, setVideoFile] = useState(null);
   const [thumbnailFile, setThumbnailFile] = useState(null);
@@ -17,6 +16,7 @@ const UploadPage = () => {
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
   const [caption, setCaption] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const videoInputRef = useRef(null);
   const thumbnailInputRef = useRef(null);
 
@@ -72,25 +72,43 @@ const UploadPage = () => {
 
     try {
       setUploading(true);
-
-      const formData = new FormData();
-      formData.append('video', videoFile);
+      setUploadProgress(0);
+      
+      // Step 1: Upload video directly to Supabase
+      const uploadToast = toast.loading('Uploading video... 0%');
+      
+      const videoUploadResult = await uploadVideoToStorage(user.id, videoFile);
+      setUploadProgress(50);
+      toast.loading('Uploading video... 50%', { id: uploadToast });
+      
+      let thumbnailUploadResult = null;
       if (thumbnailFile) {
-        formData.append('thumbnail', thumbnailFile);
+        thumbnailUploadResult = await uploadThumbnailToStorage(user.id, thumbnailFile);
       }
-      formData.append('caption', caption);
-
-      const response = await apiClient.post('/videos', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      toast.success('Video uploaded successfully!');
+      
+      setUploadProgress(75);
+      toast.loading('Uploading video... 75%', { id: uploadToast });
+      
+      // Step 2: Create video in the database with the Supabase URLs
+      const videoData = {
+        caption,
+        videoUrl: videoUploadResult.url,
+        videoStoragePath: videoUploadResult.storagePath,
+      };
+      
+      if (thumbnailUploadResult) {
+        videoData.thumbnailUrl = thumbnailUploadResult.url;
+        videoData.thumbnailStoragePath = thumbnailUploadResult.storagePath;
+      }
+      
+      await createVideo(videoData);
+      
+      setUploadProgress(100);
+      toast.success('Video uploaded successfully!', { id: uploadToast });
       router.push('/');
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error(error.response?.data?.message || 'Failed to upload video');
+      toast.error(error.message || 'Failed to upload video');
     } finally {
       setUploading(false);
     }
@@ -195,6 +213,20 @@ const UploadPage = () => {
                   {caption.length}/150
                 </p>
               </div>
+
+              {uploading && (
+                <div className="mb-4">
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div 
+                      className="bg-blue-500 h-2.5 rounded-full" 
+                      style={{ width: `${uploadProgress}%` }}
+                    ></div>
+                  </div>
+                  <p className="mt-1 text-center text-xs text-gray-500">
+                    Uploading: {uploadProgress}%
+                  </p>
+                </div>
+              )}
 
               <button
                 type="submit"

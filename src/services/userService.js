@@ -10,16 +10,16 @@ export const getUserById = async (userId) => {
   }
 };
 
-export const updateUser = async (userId, formData) => {
+export const updateUser = async (id, formData) => {
   try {
-    const response = await apiClient.put(`/users/${userId}`, formData, {
+    const response = await apiClient.put(`/users/${id}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data', // Important for file uploads
       },
     });
     return response.data;
   } catch (error) {
-    console.error(`Error updating user ${userId}:`, error);
+    console.error(`Error updating user ${id}:`, error);
     throw error;
   }
 };
@@ -46,34 +46,34 @@ export const unfollowUser = async (userId) => {
   }
 };
 
-export const getUserFollowers = async (userId) => {
+export const getUserFollowers = async (id) => {
   try {
-    const response = await apiClient.get(`/users/${userId}/followers`);
+    const response = await apiClient.get(`/users/${id}/followers`);
     return response.data;
   } catch (error) {
-    console.error(`Error fetching followers for user ${userId}:`, error);
+    console.error(`Error fetching followers for user ${id}:`, error);
     throw error;
   }
 };
 
-export const getUserFollowing = async (userId) => {
+export const getUserFollowing = async (id) => {
   try {
-    const response = await apiClient.get(`/users/${userId}/following`);
+    const response = await apiClient.get(`/users/${id}/following`);
     return response.data;
   } catch (error) {
-    console.error(`Error fetching following for user ${userId}:`, error);
+    console.error(`Error fetching following for user ${id}:`, error);
     throw error;
   }
 };
 
-export const getUserVideos = async (userId) => {
+export const getUserVideos = async (id) => {
   try {
-    const id = typeof userId === 'object' ? userId.userId : userId;
+    const id = typeof id === 'object' ? id.id : id;
     
     const response = await apiClient.get(`/users/${id}/videos`);
     return response.data;
   } catch (error) {
-    console.error(`Error fetching videos for user ${userId}:`, error);
+    console.error(`Error fetching videos for user ${id}:`, error);
     
     return { videos: [] };
   }
